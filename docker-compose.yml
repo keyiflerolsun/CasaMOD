@@ -1,21 +1,21 @@
-version: "3.8"
 name: casamod
+
 services:
   casamod:
-    #build: .
-    container_name: casamod
-    image: cp0204/casamod:latest
-    volumes:
-      - /DATA/AppData/casamod:/DATA/AppData/casamod
-      - /var/lib/casaos/www:/var/lib/casaos/www
-    pid: host
-    privileged: true
-    network_mode: bridge
-    restart: unless-stopped
-    deploy:
+    container_name : casamod
+    image          : casamod:latest
+    build          : .
+    restart        : unless-stopped
+    network_mode   : bridge
+    pid            : host
+    privileged     : true
+    deploy         :
       resources:
         reservations:
           memory: 8M
+    volumes        :
+      - /DATA/AppData/casamod:/DATA/AppData/casamod
+      - /var/lib/casaos/www:/var/lib/casaos/www
 
 x-casaos:
   architectures:

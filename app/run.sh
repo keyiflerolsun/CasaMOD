@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Consistent variable naming with lowercase and underscores
+# Tutarlı değişken adlandırma küçük harf ve alt çizgi ile
 config_dir="/DATA/AppData/casamod"
 mod_dir="${config_dir}/mod"
 mod_store_dir="${config_dir}/mod_store"
@@ -17,114 +17,114 @@ host_exec() {
 }
 
 start() {
-  echo "Starting..."
+  echo "Başlatılıyor..."
 
-  # v0.4.10+ migrate gin to echo
+  # v0.4.10+ gin'den echo'ya geçiş
   casaos_ver=$(host_exec "casaos -v | tr -d 'v'")
   if [[ $(printf "%s\n" "$casaos_ver" "0.4.9" | sort -V | tail -n1) == "$casaos_ver" ]]; then
     casaos_framework="echo"
     echo "CasaOS v$casaos_ver"
   fi
 
-  # Copy mod_store
+  # mod_store'u kopyala
   if [[ ! -d "$mod_store_dir" ]]; then
-    echo "Creating directory ${mod_store_dir}"
+    echo "${mod_store_dir} dizini oluşturuluyor"
     mkdir -p "$mod_store_dir"
     cp -r /app/mod/* "$mod_store_dir"
-    echo -e "Delete this folder and it will be recreated when the new version of the container is started.\n\n删除本文件夹，新版本容器启动时将重建。" >>"${mod_store_dir}/Recreated_Store.txt"
+    echo -e "Bu klasörü silin ve yeni sürüm konteyner başlatıldığında yeniden oluşturulacak.\n\nDelete this folder and it will be recreated when the new version of the container is started." >>"${mod_store_dir}/Recreated_Store.txt"
   fi
 
-  # Process mapping directory
+  # İşleme eşleme dizini
   for dir in "$mod_dir" "$icon_dir"; do
-    #Creating directory
+    #Dizin oluşturuluyor
     if [[ ! -d "$dir" ]]; then
-      echo "Creating directory ${dir}"
+      echo "${dir} dizini oluşturuluyor"
       mkdir -p "$dir"
-      # Creating README
+      # README oluşturuluyor
       if [[ "$dir" == "$icon_dir" ]]; then
-        echo -e "This folder can be accessed by http(s)://casaos/icon/*, e.g. you can place app1.png and fill in icon/app1.png in the app icon settings.\n\n本文件夹内容可以被 http(s)://casaos/icon/* 访问，例如你可以放置 app1.png ，在应用图标设置中填 icon/app1.png" >>"${icon_dir}/README.txt"
+        echo -e "Bu klasör http(s)://casaos/icon/* ile erişilebilir, örneğin app1.png yerleştirebilir ve uygulama simge ayarlarında icon/app1.png doldurabilirsiniz.\n\nThis folder can be accessed by http(s)://casaos/icon/*, e.g. you can place app1.png and fill in icon/app1.png in the app icon settings." >>"${icon_dir}/README.txt"
       fi
     fi
-    # Creating symlink
+    # Symlink oluşturuluyor
     symlink_dir="${www_dir}/${dir##*/}"
     if [[ ! -d "$symlink_dir" ]]; then
-      echo "Creating symlink ${dir} to ${symlink_dir}"
+      echo "${dir}'den ${symlink_dir}'e symlink oluşturuluyor"
       ln -s "$dir" "$symlink_dir"
     fi
   done
 
-  # Create symlink for www_dir in config_dir
+  # config_dir'de www_dir için symlink oluştur
   # www_link="${config_dir}/www"
   # if [[ ! -d "$www_link" ]]; then
-  #   echo "Creating symlink ${www_dir} to ${www_link}"
+  #   echo "${www_dir}'den ${www_link}'e symlink oluşturuluyor"
   #   ln -s "$www_dir" "$www_link"
   # fi
 
-  # Backup index.html
+  # index.html'yi yedekle
   if [[ ! -f "$index_html_bak" ]]; then
     cp "$index_html" "$index_html_bak"
-    echo "Backup index.html"
+    echo "index.html yedeklendi"
   else
     cp "$index_html_bak" "$index_html"
   fi
 
-  # Build tags for mods
+  # Modlar için etiketler oluştur
   js_tags=""
   css_tags=""
   for mod_path in "$mod_dir"/*; do
     mod_js_path="${mod_path}/mod.js"
     mod_css_path="${mod_path}/mod.css"
     if [[ -f "$mod_js_path" ]]; then
-      echo "Reading ${mod_js_path}"
+      echo "${mod_js_path} okunuyor"
       js_tags+="<script type=\"text/javascript\" src=\"mod/${mod_path##*/}/mod.js\"></script>\n"
     fi
     if [[ -f "$mod_css_path" ]]; then
-      echo "Reading ${mod_css_path}"
+      echo "${mod_css_path} okunuyor"
       css_tags+="<link href=\"/mod/${mod_path##*/}/mod.css\" rel=\"stylesheet\">\n"
     fi
   done
   if [[ -z "$js_tags" ]]; then
-    js_tags="\n<!-- CasaMOD is loaded, but no js found -->\n"
+    js_tags="\n<!-- CasaMOD yüklendi, ancak js bulunamadı -->\n"
   else
     js_tags="\n<!-- CasaMOD js -->\n${js_tags}"
   fi
   #echo "$js_tags"
   if [[ -z "$css_tags" ]]; then
-    css_tags="\n<!-- CasaMOD is loaded, but no css found -->\n"
+    css_tags="\n<!-- CasaMOD yüklendi, ancak css bulunamadı -->\n"
   else
     css_tags="\n<!-- CasaMOD css -->\n${css_tags}"
   fi
   #echo "$css_tags"
 
-  # Modify index.html
+  # index.html'yi değiştir
   sed -i "s|<title>|${css_tags}<title>|" "$index_html"
   sed -i "s|<\/body>|${js_tags}<\/body>|" "$index_html"
-  echo "Modified index.html"
+  echo "index.html değiştirildi"
 
-  # Restart gateway
+  # Ağ geçidini yeniden başlat
   if [[ $casaos_framework == "echo" ]]; then
     host_exec "systemctl restart casaos-gateway.service"
-    echo "Restarted casaos-gateway.service"
+    echo "casaos-gateway.service yeniden başlatıldı"
   fi
 
-  echo "Keep Running..."
+  echo "Çalışmaya devam ediliyor..."
   while true; do
     sleep 1
   done
 }
 
 stop() {
-  echo "Stopping..."
+  echo "Durduruluyor..."
   if [[ -f "$index_html_bak" ]]; then
     cp "$index_html_bak" "$index_html"
     rm "$index_html_bak"
-    echo "Restored index.html"
+    echo "index.html geri yüklendi"
     if [[ $casaos_framework == "echo" ]]; then
       host_exec "systemctl restart casaos-gateway.service"
-      echo "Restarted casaos-gateway.service"
+      echo "casaos-gateway.service yeniden başlatıldı"
     fi
   else
-    echo "Backup file not found, cannot restore index.html"
+    echo "Yedek dosya bulunamadı, index.html geri yüklenemiyor"
   fi
   exit 0
 }
@@ -139,7 +139,7 @@ stop)
   stop
   ;;
 *)
-  echo "Invalid command. Supported commands: start, stop"
+  echo "Geçersiz komut. Desteklenen komutlar: start, stop"
   exit 1
   ;;
 esac
